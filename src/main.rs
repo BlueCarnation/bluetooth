@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
 
 pub async fn run_bluetooth_script() -> Result<bool> {
     // Open the file in read-only mode with buffer.
-    let mut file = File::open("../config.json").expect("Cannot open file");
+    let mut file = File::open("config.json").expect("Cannot open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Cannot read file");
