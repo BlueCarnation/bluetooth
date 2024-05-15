@@ -44,9 +44,10 @@ pub async fn run_bluetooth_script() -> Result<bool> {
 
                     for (index, device) in devices.iter().enumerate() {
                         if let Some(properties) = device.properties().await? {
-                            let manufacturer = get_manufacturer(&properties.address.to_string())
-                                .await
-                                .unwrap_or_else(|| "Unknown".to_string());
+                            let raw_manufacturer = get_manufacturer(&properties.address.to_string()).await.unwrap_or_else(|| "Unknown".to_string());
+                            let manufacturer = sanitize_string(raw_manufacturer);
+                            let sanitized_local_name = sanitize_string(properties.local_name.unwrap_or_else(|| "Unknown".to_string()));
+
 
                             // Serialize manufacturer_data as a JSON string
                             let manufacturer_data_json =
@@ -66,7 +67,7 @@ pub async fn run_bluetooth_script() -> Result<bool> {
                                 "address_type": address_type_to_string(properties.address_type),
                                 "classe": class_to_string(properties.class),
                                 "fabricant": manufacturer,
-                                "local_name": properties.local_name.unwrap_or_else(|| "Unknown".to_string()),
+                                "local_name": sanitized_local_name,
                                 "mac_bluetooth": properties.address,
                                 "manufacturer_data": manufacturer_data_json,
                                 "rssi": rssi_to_string(properties.rssi),
@@ -135,7 +136,9 @@ pub async fn run_bluetooth_script() -> Result<bool> {
                                 }
                 
                                 // Update or insert detailed device information
-                                let manufacturer = get_manufacturer(&properties.address.to_string()).await.unwrap_or_else(|| "Unknown".to_string());
+                                let raw_manufacturer = get_manufacturer(&properties.address.to_string()).await.unwrap_or_else(|| "Unknown".to_string());
+                                let manufacturer = sanitize_string(raw_manufacturer);
+                                let sanitized_local_name = sanitize_string(properties.local_name.unwrap_or_else(|| "Unknown".to_string()));
                                 let manufacturer_data_json = serde_json::to_string(&properties.manufacturer_data).unwrap_or("{}".to_string());
                                 let service_data_json = serde_json::to_string(&properties.service_data).unwrap_or("{}".to_string());
                                 let services_json = if !properties.services.is_empty() {
@@ -149,7 +152,7 @@ pub async fn run_bluetooth_script() -> Result<bool> {
                                     "address_type": address_type_to_string(properties.address_type),
                                     "classe": class_to_string(properties.class),
                                     "fabricant": manufacturer,
-                                    "local_name": properties.local_name.unwrap_or_else(|| "Unknown".to_string()),
+                                    "local_name": sanitized_local_name,
                                     "mac_bluetooth": properties.address,
                                     "manufacturer_data": manufacturer_data_json,
                                     "rssi": rssi_to_string(properties.rssi),
@@ -189,6 +192,10 @@ pub async fn run_bluetooth_script() -> Result<bool> {
         println!("Aucun adaptateur Bluetooth trouvé.");
     }
     Ok(!device_data.is_empty())
+}
+
+fn sanitize_string(input: String) -> String {
+    input.replace("'", " ").replace("`", " ").replace("\"", " ")
 }
 
 fn address_type_to_string(address_type: Option<AddressType>) -> String {
