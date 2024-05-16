@@ -74,6 +74,7 @@ pub async fn run_bluetooth_script() -> Result<bool> {
                                 "service_data": service_data_json, // Use the serialized string
                                 "services": services_json, // Use the serialized string
                                 "tx_power_level": tx_power_level_to_string(properties.tx_power_level),
+                                "bluetooth_durations": "none"
                             });
 
                             device_data.insert(index.to_string(), device_info);
